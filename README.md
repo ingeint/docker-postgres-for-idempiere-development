@@ -10,7 +10,11 @@ IDEMPIERE_REPOSITORY=/home/sauljp/Workspace/idempiere
 export IDEMPIERE_REPOSITORY
 ```
 
-`make run ; sleep 15 ; make import-db` or `make phoenix ; sleep 15 ; make import-db`.
+Start docker swarm mode `docker swarm init` (just the first time).
+
+First time run `make run ; sleep 15 ; make import-db` or `make phoenix ; sleep 15 ; make import-db`.
+
+If you are using `make phoenix` you need to run after `make import-db` each time.
 
 ## Commands
 
