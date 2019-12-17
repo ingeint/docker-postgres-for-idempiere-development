@@ -16,6 +16,9 @@ bash:
 psql:
 	docker run --rm -it --network host -e PGPASSWORD=postgres postgres:9.6 psql -h localhost -U postgres
 
+clean:
+	@ docker volume rm postgres_postgres || true
+
 import-db:
 	cd $(IDEMPIERE_REPOSITORY)/org.adempiere.server-feature/data/seed/ && jar xvf Adempiere_pg.jar
 	docker run --rm -it --network host -e PGPASSWORD=postgres postgres:9.6 psql -h localhost -q -U postgres -c "CREATE ROLE adempiere SUPERUSER LOGIN PASSWORD 'adempiere'"
