@@ -1,37 +1,67 @@
+-include .env
+export
+
+ifeq ($(POSTGRES_VERSION),)
+POSTGRES_VERSION := 9.6
+endif
+
+ifeq ($(DOCKER_NAME),)
+DOCKER_NAME := postgres
+endif
+
 run:
-	docker stack deploy -c docker-stack.yml postgres
+	docker run --name $(DOCKER_NAME) -d -e POSTGRES_PASSWORD=postgres -e TZ=America/Guayaquil -v postgres:/var/lib/postgresql/data -p 5432:5432 postgres:$(POSTGRES_VERSION)
+
+set-idempiere-path:
+	echo "IDEMPIERE_REPOSITORY=$(value)\nPOSTGRES_VERSION=$(POSTGRES_VERSION)\nDOCKER_NAME=$(DOCKER_NAME)\n" > .env
+
+set-docker-name:
+	echo "IDEMPIERE_REPOSITORY=$(IDEMPIERE_REPOSITORY)\nPOSTGRES_VERSION=$(POSTGRES_VERSION)\nDOCKER_NAME=$(value)\n" > .env
+
+set-postgres-version:
+	echo "IDEMPIERE_REPOSITORY=$(IDEMPIERE_REPOSITORY)\nPOSTGRES_VERSION=$(value)\nDOCKER_NAME=$(DOCKER_NAME)\n" > .env
 
 phoenix:
-	docker stack deploy -c docker-stack-no-volume.yml postgres
+	docker run --name $(DOCKER_NAME) -d -e POSTGRES_PASSWORD=postgres -e TZ=America/Guayaquil -p 5432:5432 postgres:$(POSTGRES_VERSION)
 
 stop:
-	docker stack rm postgres
+	docker stop $(DOCKER_NAME)
+
+start:
+	docker start $(DOCKER_NAME)
 
 status:
-	docker stack services postgres
+	docker ps -a --filter "name=$(DOCKER_NAME)"
 
 bash:
-	docker run --rm -it --network host -e PGPASSWORD=postgres postgres:9.6 bash
+	docker run --rm -it --network host -e PGPASSWORD=postgres postgres:$(POSTGRES_VERSION) bash
 
 psql:
-	docker run --rm -it --network host -e PGPASSWORD=postgres postgres:9.6 psql -h localhost -U postgres
+	docker run --rm -it --network host -e PGPASSWORD=postgres postgres:$(POSTGRES_VERSION) psql -h localhost -U postgres
 
 clean:
-	@ docker volume rm postgres_postgres || true
+	docker rm -f $(DOCKER_NAME) || true
+	docker volume rm postgres || true
+
+clean-env:
+	rm .env || true
 
 import-db:
 	cd $(IDEMPIERE_REPOSITORY)/org.adempiere.server-feature/data/seed/ && jar xvf Adempiere_pg.jar
-	docker run --rm -it --network host -e PGPASSWORD=postgres postgres:9.6 psql -h localhost -q -U postgres -c "CREATE ROLE adempiere SUPERUSER LOGIN PASSWORD 'adempiere'"
-	docker run --rm -it --network host -e PGPASSWORD=adempiere postgres:9.6 createdb -h localhost --template=template0 -E UNICODE -O adempiere -U adempiere idempiere
-	docker run --rm -it --network host -e PGPASSWORD=adempiere postgres:9.6 psql -h localhost -d idempiere -U adempiere -c "ALTER ROLE adempiere SET search_path TO adempiere, pg_catalog"
-	docker run --rm -it --network host -e PGPASSWORD=adempiere postgres:9.6 psql -h localhost -d idempiere -U adempiere -c 'CREATE EXTENSION "uuid-ossp"'
-	cat $(IDEMPIERE_REPOSITORY)/org.adempiere.server-feature/data/seed/Adempiere_pg.dmp | docker run --rm -i --network host -e PGPASSWORD=adempiere postgres:9.6 psql -h localhost -d idempiere -U adempiere
-	docker run --rm -it --network host -e PGPASSWORD=adempiere -v $(IDEMPIERE_REPOSITORY):/idempiere -v $(shell pwd):/scripts postgres:9.6 sh /scripts/syncApplied.sh
+	docker run --rm -it --network host -e PGPASSWORD=postgres postgres:$(POSTGRES_VERSION) psql -h localhost -q -U postgres -c "CREATE ROLE adempiere SUPERUSER LOGIN PASSWORD 'adempiere'"
+	docker run --rm -it --network host -e PGPASSWORD=adempiere postgres:$(POSTGRES_VERSION) createdb -h localhost --template=template0 -E UNICODE -O adempiere -U adempiere idempiere
+	docker run --rm -it --network host -e PGPASSWORD=adempiere postgres:$(POSTGRES_VERSION) psql -h localhost -d idempiere -U adempiere -c "ALTER ROLE adempiere SET search_path TO adempiere, pg_catalog"
+	docker run --rm -it --network host -e PGPASSWORD=adempiere postgres:$(POSTGRES_VERSION) psql -h localhost -d idempiere -U adempiere -c 'CREATE EXTENSION "uuid-ossp"'
+	cat $(IDEMPIERE_REPOSITORY)/org.adempiere.server-feature/data/seed/Adempiere_pg.dmp | docker run --rm -i --network host -e PGPASSWORD=adempiere postgres:$(POSTGRES_VERSION) psql -h localhost -d idempiere -U adempiere
+
+migrate:
+	docker run --rm -it --network host -e PGPASSWORD=adempiere -e IDEMPIERE_HOME=/idempiere -e ADEMPIERE_DB_NAME=idempiere -e ADEMPIERE_DB_SERVER=localhost -e ADEMPIERE_DB_PORT=5432 -v $(IDEMPIERE_REPOSITORY):/idempiere postgres:$(POSTGRES_VERSION) sh /idempiere/org.adempiere.server-feature/utils.unix/postgresql/SyncDB.sh adempiere adempiere postgresql
 
 backup-db:
-	docker run --rm --network host -e PGPASSWORD=adempiere postgres:9.6 pg_dump -v -h localhost -U adempiere -b -Fc -d idempiere > $(shell echo `date +%Y%m%d%H%M%S`).backup
+	docker run --rm --network host -e PGPASSWORD=adempiere postgres:$(POSTGRES_VERSION) pg_dump -v -h localhost -U adempiere -b -Fc -d idempiere > $(shell echo `date +%Y%m%d%H%M%S`)-idempiere-dev.backup
+	echo "Backups: " && ls -laht *.backup
 
 restore-db:
-	docker run --rm -it --network host -e PGPASSWORD=adempiere postgres:9.6 dropdb  -h localhost -U adempiere idempiere
-	docker run --rm -it --network host -e PGPASSWORD=adempiere postgres:9.6 createdb -h localhost --template=template0 -E UNICODE -O adempiere -U adempiere idempiere
-	docker run --rm --network host -v $(shell pwd)/$(f):/$(f) -e PGPASSWORD=adempiere postgres:9.6 pg_restore -v -h localhost -U adempiere -d idempiere /$(f)
+	docker run --rm -it --network host -e PGPASSWORD=adempiere postgres:$(POSTGRES_VERSION) dropdb  -h localhost -U adempiere idempiere
+	docker run --rm -it --network host -e PGPASSWORD=adempiere postgres:$(POSTGRES_VERSION) createdb -h localhost --template=template0 -E UNICODE -O adempiere -U adempiere idempiere
+	docker run --rm --network host -v $(shell pwd)/$(filename):/$(filename) -e PGPASSWORD=adempiere postgres:$(POSTGRES_VERSION) pg_restore -v -h localhost -U adempiere -d idempiere /$(filename)
