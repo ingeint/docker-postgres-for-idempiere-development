@@ -64,6 +64,7 @@ backup-db:
 	echo "Backups: " && ls -laht *.backup
 
 restore-db:
-	docker run --rm -it --network host -e PGPASSWORD=adempiere postgres:$(POSTGRES_VERSION) dropdb  -h localhost -U adempiere idempiere
+	docker run --rm -it --network host -e PGPASSWORD=adempiere postgres:$(POSTGRES_VERSION) dropdb  -h localhost -U adempiere idempiere || true
+	docker run --rm -it --network host -e PGPASSWORD=postgres postgres:$(POSTGRES_VERSION) psql -h localhost -q -U postgres -c "CREATE ROLE adempiere SUPERUSER LOGIN PASSWORD 'adempiere'" || true
 	docker run --rm -it --network host -e PGPASSWORD=adempiere postgres:$(POSTGRES_VERSION) createdb -h localhost --template=template0 -E UNICODE -O adempiere -U adempiere idempiere
 	docker run --rm --network host -v $(shell pwd)/$(filename):/$(filename) -e PGPASSWORD=adempiere postgres:$(POSTGRES_VERSION) pg_restore -v -h localhost -U adempiere -d idempiere /$(filename)
