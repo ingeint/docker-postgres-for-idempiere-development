@@ -46,7 +46,9 @@ clean:
 clean-env:
 	rm .env || true
 
-import-db:
+import-db: import-seed migrate
+
+import-seed:
 	cd $(IDEMPIERE_REPOSITORY)/org.adempiere.server-feature/data/seed/ && jar xvf Adempiere_pg.jar
 	docker run --rm -it --network host -e PGPASSWORD=postgres postgres:$(POSTGRES_VERSION) psql -h localhost -q -U postgres -c "CREATE ROLE adempiere SUPERUSER LOGIN PASSWORD 'adempiere'"
 	docker run --rm -it --network host -e PGPASSWORD=adempiere postgres:$(POSTGRES_VERSION) createdb -h localhost --template=template0 -E UNICODE -O adempiere -U adempiere idempiere

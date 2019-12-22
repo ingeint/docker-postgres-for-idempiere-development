@@ -12,9 +12,9 @@ export IDEMPIERE_REPOSITORY
 
 Or running `make set-idempiere-path value=/home/sauljp/Workspace/idempiere`
 
-First time run `make run ; sleep 15 ; make import-db migrate` or `make phoenix ; sleep 15 ; make import-db migrate`.
+First time run `make run ; sleep 15 ; make import-db` or `make phoenix ; sleep 15 ; make import-db`.
 
-If you are using `make phoenix` you need to run after `make import-db migrate` each time.
+If you are using `make phoenix` you need to run after `make import-db` each time.
 
 ## Envs
 
@@ -35,6 +35,7 @@ If you are using `make phoenix` you need to run after `make import-db migrate` e
 - Open a bash: `make bash`
 - Open psql: `make psql`
 - Import db: `make import-db`
+- Import just the db seed: `make import-seed`
 - Migrate: `make migrate`
 - Create a backup: `make backup-db`
 - Restore a db: `make restore-db filename=filename`
