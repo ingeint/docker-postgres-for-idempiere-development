@@ -20,7 +20,8 @@ If you are using `make phoenix` you need to run after `make import-db` each time
 
 - `IDEMPIERE_REPOSITORY` need it
 - `DOCKER_NAME` default `postgres`
-- `POSTGRES_VERSION` default 9.6
+- `POSTGRES_VERSION` default `9.6`
+- `DB_NAME` default `idempiere`
 
 ## Commands
 
@@ -29,6 +30,7 @@ If you are using `make phoenix` you need to run after `make import-db` each time
 - Set env IDEMPIERE_REPOSITORY: `make set-idempiere-path value=/home/sauljp/Workspace/idempiere`
 - Set env DOCKER_NAME: `make set-docker-name value=postgres`
 - Set env POSTGRES_VERSION: `make set-postgres-version value=9.6`
+- Set env DB_NAME: `make set-db-name value=idempiere`
 - Stop postgres: `make stop`
 - Restart postgres: `make start`
 - See status: `make status`
