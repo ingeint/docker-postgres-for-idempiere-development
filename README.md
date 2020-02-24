@@ -42,4 +42,5 @@ If you are using `make phoenix` you need to run after `make import-db` each time
 - Create a backup: `make backup-db`
 - Restore a db: `make restore-db filename=filename`
 - Remove data volume: `make clean`
-- Remove env variables: `make clean -env`
+- Remove env variables: `make clean-env`
+- Drop db: `make drop-db`
