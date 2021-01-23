@@ -2,7 +2,7 @@
 export
 
 ifeq ($(POSTGRES_VERSION),)
-POSTGRES_VERSION := 9.6
+POSTGRES_VERSION := 12
 endif
 
 ifeq ($(DOCKER_NAME),)
@@ -72,7 +72,7 @@ backup-db:
 
 drop-db:
 	docker run --rm -it --network host -e PGPASSWORD=adempiere postgres:$(POSTGRES_VERSION) dropdb  -h localhost -U adempiere $(DB_NAME) || true
-	
+
 restore-db:
 	docker run --rm -it --network host -e PGPASSWORD=adempiere postgres:$(POSTGRES_VERSION) dropdb  -h localhost -U adempiere $(DB_NAME) || true
 	docker run --rm -it --network host -e PGPASSWORD=postgres postgres:$(POSTGRES_VERSION) psql -h localhost -q -U postgres -c "CREATE ROLE adempiere SUPERUSER LOGIN PASSWORD 'adempiere'" || true
